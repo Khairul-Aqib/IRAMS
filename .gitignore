@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────
+# Secrets and local config (NEVER commit these)
+# ─────────────────────────────────────────────
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+serviceAccountKey.json
+.env
+.env.*
+appsettings.Development.json
+*.keystore
+*.jks
+key.properties
+
+# Local agent / editor settings
+.claude/
+.idea/
+.vscode/
+
+# ─────────────────────────────────────────────
+# Flutter / Dart
+# ─────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+.fvm/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+app.*.symbols
+app.*.map.json
+*.iml
+*.ipr
+*.iws
+
+# Android
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/.cxx/
+
+# iOS / macOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/macos/Pods/
+**/Flutter/ephemeral/
+
+# ─────────────────────────────────────────────
+# Node.js (Firebase Cloud Functions)
+# ─────────────────────────────────────────────
+node_modules/
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+*.local
+.firebase/
+
+# ─────────────────────────────────────────────
+# .NET / ASP.NET (admin portal)
+# ─────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+.vs/
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.dll
+*.pdb
+publish/
+*.cache
+
+# ─────────────────────────────────────────────
+# Misc
+# ─────────────────────────────────────────────
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+Thumbs.db
+.history
+.svn/
+migrate_working_dir/

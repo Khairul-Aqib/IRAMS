@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Profile pictures: each user can read/write only their own avatar.
+    // The file name must match the authenticated user's UID.
+    match /profile_pictures/{fileName} {
+      // Any signed-in user can view profile pictures (needed so other users
+      // e.g. contractors viewing this user can render the avatar). Tighten
+      // to `request.auth.uid == fileName.split('.')[0]` if you want strict
+      // self-only reads.
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && fileName.matches('^' + request.auth.uid + '\\.(jpg|jpeg|png|webp)$')
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+
+      allow delete: if request.auth != null
+                    && fileName.matches('^' + request.auth.uid + '\\..*');
+    }
+
+    // Support ticket attachments (e.g. "Brand Not Found" car photos).
+    // Stored under support_tickets/{uid}/{ticketId}.{ext}; only the owner
+    // can write, but any signed-in user (admins included) can read them.
+    match /support_tickets/{userId}/{fileName} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+
+      allow delete: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+
+    // Admin verification uploads — car request photos attached to a
+    // SupportTicket. Filenames are millisecond timestamps so they can't
+    // collide. Any signed-in user can post a request; admins read.
+    match /admin_verification/car_requests/{fileName} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Vehicle request photos attached to a VehicleRequests document.
+    // Filenames must be prefixed with the uploader's auth uid so users
+    // can't post images attributed to someone else.
+    //
+    // The prefix check is split into two ANDed conditions instead of being
+    // baked into a single concatenated regex — Firebase Storage's matches()
+    // is unreliable when interpolating `request.auth.uid` into the pattern,
+    // so we verify the prefix with `startsWith()` and the extension with a
+    // static regex separately.
+    match /vehicle_requests/{fileName} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null
+                   && fileName.size() > request.auth.uid.size() + 1
+                   && fileName[0:request.auth.uid.size() + 1] == request.auth.uid + '_'
+                   && fileName.matches('.*\\.(jpg|jpeg|png|webp)$')
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Everything else: locked down.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
