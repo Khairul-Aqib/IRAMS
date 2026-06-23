@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+
+    match /contractors/{contractorId} {
+      allow read: if isSignedIn() && uid() == contractorId;
+      allow create, update: if isSignedIn() && uid() == contractorId;
+    }
+
+    match /jobs/{jobId} {
+      // Contractors can read jobs assigned to them
+      allow read: if isSignedIn() && resource.data.contractorId == uid();
+
+      // Contractor updates only for allowed fields (status updates etc.)
+      allow update: if isSignedIn()
+        && resource.data.contractorId == uid()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'status',
+          'acceptedAt',
+          'rejectedAt',
+          'on_the_wayAt',
+          'in_progressAt',
+          'completedAt'
+        ]);
+
+      // Messages subcollection
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn() && get(/databases/$(database)/documents/jobs/$(jobId)).data.contractorId == uid();
+      }
+    }
+
+    match /JobInvoice/{invoiceId} {
+      allow read: if isSignedIn();
+    }
+
+    match /Contractor/{contractorId} {
+      allow read, write: if isSignedIn() 
+        && request.auth.token.email == resource.data.Email;
+    }
+
+    match /Jobs/{jobId} {
+      allow read: if isSignedIn();
+      allow update: if isSignedIn();
+      
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn();
+      }
+    }
+  }
+}

@@ -1,0 +1,109 @@
+name: contractor
+description: IRAMS Contractor App - Professional Roadside Assistance Platform
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_messaging: ^15.1.3
+  firebase_storage: ^12.3.4  # For contractor document uploads
+  cloud_functions: ^5.1.3    # HTTPS callable (ToyyibPay top-up)
+  google_sign_in: ^6.2.2    # Native Google Sign-In
+
+  # State Management & Architecture
+  provider: ^6.1.5+1  # For better state management
+  riverpod: ^2.6.1  # Alternative to Provider (optional)
+
+  # UI / Routing
+  go_router: ^14.6.1
+  intl: ^0.19.0
+
+  # Maps + Location
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0  # For reverse geocoding addresses
+
+  # Networking
+  dio: ^5.7.0
+  connectivity_plus: ^7.0.0  # Network connectivity monitoring
+
+  # Local Storage & Caching
+  shared_preferences: ^2.3.3
+  hive: ^2.2.3  # For offline-first architecture
+  hive_flutter: ^1.1.0
+
+  # Utilities
+  url_launcher: ^6.3.1
+  webview_flutter: ^4.10.0
+  image_picker: ^1.2.1  # For uploading contractor documents
+  permission_handler: ^12.0.1  # Better permission handling
+  flutter_local_notifications: ^18.0.1  # Local notifications
+  
+  # UI Enhancements
+  shimmer: ^3.0.0  # Loading skeletons
+  lottie: ^3.3.1  # Animated illustrations
+  cached_network_image: ^3.4.1  # Image caching
+  flutter_svg: ^2.0.10+1  # SVG support
+  
+  # PDF Generation
+  pdf: ^3.10.8
+  printing: ^5.12.0
+
+  # UX Enhancements
+  slide_to_act: ^2.0.2
+
+  # Form Validation
+  form_field_validator: ^1.1.0
+  
+  # Security
+  flutter_dotenv: ^6.0.0  # Environment variables
+  encrypt: ^5.0.3  # Data encryption (optional)
+
+  # Error Tracking (Production)
+  sentry_flutter: ^8.11.0  # Crash reporting (optional)
+  
+  # Analytics (Production)
+  firebase_analytics: ^11.3.3  # User analytics (optional)
+  google_maps_flutter: ^2.14.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13  # For code generation
+  hive_generator: ^2.0.1  # Hive model generation
+  mockito: ^5.4.4  # For unit testing
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/lottie/
+    - .env  # Environment variables
+  
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/irams_logo.png"
+  min_sdk_android: 21

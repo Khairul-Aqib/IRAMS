@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IRAMS Payment Successful</title>
+  <style>
+    :root {
+      --primary: #4caf50;
+      --bg-dark: #121212;
+      --card-dark: #1e1e1e;
+      --text-main: #ffffff;
+      --text-muted: #aaaaaa;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      text-align: center; 
+      padding: 0; 
+      margin: 0;
+      background-color: var(--bg-dark); 
+      color: var(--text-main); 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card { 
+      background: var(--card-dark); 
+      padding: 40px 30px; 
+      border-radius: 20px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+      width: 85%;
+      max-width: 400px;
+      border: 1px solid #333; 
+    }
+
+    /* Animated Checkmark Circle */
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px auto;
+      border: 2px solid var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      color: var(--primary);
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+    }
+
+    h1 { 
+      color: var(--text-main); 
+      font-size: 24px; 
+      margin: 0 0 10px 0;
+      font-weight: 600;
+    }
+
+    .amount-display {
+      font-size: 36px;
+      font-weight: bold;
+      color: var(--primary);
+      margin: 15px 0;
+    }
+
+    p { 
+      color: var(--text-muted); 
+      font-size: 15px; 
+      line-height: 1.5; 
+      margin-bottom: 30px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #333;
+      margin: 25px 0;
+      width: 100%;
+    }
+
+    .instruction-box {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="success-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+      </svg>
+    </div>
+    
+    <h1>Top Up Successful</h1>
+    
+    <div class="amount-display" id="display-amount">Funds Added</div>
+    
+    <p>Your transaction was securely processed and added to your IRAMS Wallet.</p>
+
+    <div class="divider"></div>
+
+    <div class="instruction-box">
+      <span>👆</span>
+      <strong>Tap the 'X' at the top left to return to the app.</strong>
+    </div>
+  </div>
+
+  <script>
+    // Extract transaction details from ToyyibPay URL parameters
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // ToyyibPay sometimes passes the amount, or we can check custom params
+      const amount = urlParams.get('amount'); 
+      const statusId = urlParams.get('status_id');
+
+      // If amount exists in the URL, format it beautifully
+      if (amount && !isNaN(amount)) {
+        document.getElementById('display-amount').innerText = 'RM ' + parseFloat(amount).toFixed(2);
+      } else {
+        // Fallback if the Cloud Function didn't pass the amount in the URL
+        document.getElementById('display-amount').innerText = 'Wallet Updated';
+      }
+
+      // If status_id is 3 (Failed), change the UI to red
+      if (statusId === '3') {
+        document.querySelector('h1').innerText = "Payment Failed";
+        document.querySelector('.amount-display').innerText = "Transaction Cancelled";
+        document.querySelector('.amount-display').style.color = "#f44336";
+        document.querySelector('.success-icon').style.borderColor = "#f44336";
+        document.querySelector('.success-icon svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>';
+        document.querySelector('.success-icon svg').style.color = "#f44336";
+      }
+    };
+  </script>
+
+</body>
+</html>

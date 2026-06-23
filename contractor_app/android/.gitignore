@@ -1,0 +1,19 @@
+gradle-wrapper.jar
+/.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+
+# Remember to never publicly share your keystore.
+# See https://flutter.dev/to/reference-keystore
+key.properties
+**/*.keystore
+**/*.jks
+
+# Firebase — contains project ID, API key, and OAuth client secrets.
+# Each developer/CI pipeline must download this from the Firebase Console.
+# https://firebase.google.com/docs/android/setup
+app/google-services.json
