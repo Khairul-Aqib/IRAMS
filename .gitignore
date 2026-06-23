@@ -93,3 +93,13 @@ Thumbs.db
 .history
 .svn/
 migrate_working_dir/
+
+# ─────────────────────────────────────────────
+# Firebase Admin SDK service-account keys (NEVER commit)
+# ─────────────────────────────────────────────
+**/Key/
+*firebase-adminsdk*.json
+admin_portal/**/Key/
+
+# NuGet restored packages (old-style projects)
+packages/

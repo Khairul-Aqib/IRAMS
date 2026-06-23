@@ -1,0 +1,260 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site1.master.cs" Inherits="AdminPage.Site1" %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head runat="server">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        <asp:ContentPlaceHolder ID="TitleContent" runat="server" />
+    </title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="css.css" rel="stylesheet" />
+
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // ============================================================
+        // TODO: INSERT EMAILJS PUBLIC KEY BELOW
+        // Get your Public Key from: https://dashboard.emailjs.com/admin/account
+        // ============================================================
+        (function () {
+            emailjs.init("eZ5Tkm-a1dK88H2ZD"); // <-- TODO: REPLACE WITH YOUR EMAILJS PUBLIC KEY
+        })();
+    </script>
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</head>
+
+<body class="font-inter bg-[#0d0d0d] text-white">
+
+    <form runat="server">
+        <div class="flex">
+
+            <!-- Sidebar -->
+            <aside class="w-64 h-screen bg-[#1a1a1a] border-r border-[#333] p-5 fixed">
+
+                <!-- Logo -->
+                <div class="flex items-center gap-2 mb-10">
+                    <img src="images/logoo.png" alt="Logo" class="w-20.1 h-20.1 object-contain" />
+                </div>
+
+                <!-- Nav Buttons -->
+                <nav class="flex flex-col gap-2">
+                    <a href="Dashboard.aspx" class="sidebar-btn">Dashboard</a>
+                    <a href="Users.aspx" class="sidebar-btn">Users</a>
+                    <a href="Contractors.aspx" class="sidebar-btn">Contractors</a>
+                    <a href="Jobs.aspx" class="sidebar-btn">Jobs</a>
+                    <a href="RevenueReports.aspx" class="sidebar-btn">Reports</a>
+                    <a href="Services.aspx" class="sidebar-btn">Service Management</a>
+
+                    <!-- Car Approvals with badge -->
+                    <a href="CarApprovals.aspx" class="sidebar-btn relative">
+                        Car Approvals
+                        <span id="carApprovalBadge"
+                              class="hidden absolute top-1/2 -translate-y-1/2 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center pointer-events-none">
+                            0
+                        </span>
+                    </a>
+
+                    <!-- Compliance Desk with badge -->
+                    <a href="ComplianceDesk.aspx" class="sidebar-btn relative">
+                        Compliance Desk
+                        <span id="complianceBadge"
+                              class="hidden absolute top-1/2 -translate-y-1/2 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center pointer-events-none">
+                            0
+                        </span>
+                    </a>
+
+                    <!-- Finance Desk with badge -->
+                    <a href="FinanceDesk.aspx" class="sidebar-btn relative">
+                        Finance Desk
+                        <span id="financeBadge"
+                              class="hidden absolute top-1/2 -translate-y-1/2 right-3 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center pointer-events-none">
+                            0
+                        </span>
+                    </a>
+
+                    <!-- Support Chat -->
+                    <a href="SupportChat.aspx" class="sidebar-btn">
+                        Support Chat
+                    </a>
+
+                    <!-- Admin Management (Manager only — hidden by default, shown via JS) -->
+                    <a href="AdminManagement.aspx" class="sidebar-btn hidden" id="adminMgmtLink">
+                        Admin Management
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="ml-64 w-full">
+
+                <!-- Top Navbar -->
+                <header class="flex justify-end items-center px-8 py-5 border-b border-[#333] bg-[#1a1a1a]">
+
+                    <!-- Admin Info and Logout -->
+                    <div class="flex items-center gap-3">
+                        <!-- Profile picture (circular) -->
+                        <div class="w-9 h-9 rounded-full bg-[#333] border border-[#555] flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <img id="imgAdminProfile" src="" alt=""
+                                 class="w-full h-full object-cover hidden" />
+                            <i data-lucide="user" class="w-5 h-5 text-gray-400" id="iconAdminFallback"></i>
+                        </div>
+
+                        <asp:Label ID="lblAdminName" runat="server" CssClass="text-sm"></asp:Label>
+
+                        <asp:LinkButton ID="lnkTopLogout" runat="server" OnClick="Logout_Click" CssClass="text-xs text-gray-400 hover:text-red-400 underline" CausesValidation="false">
+                            Logout
+                        </asp:LinkButton>
+                    </div>
+                </header>
+
+                <div class="p-10">
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+                </div>
+
+            </main>
+
+        </div>
+
+        <script>
+            lucide.createIcons();
+        </script>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+            import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyAMlwMv8JHIaiEnAhXMCVB8HItv8ovsVPA",
+                authDomain: "iramsfyp.firebaseapp.com",
+                databaseURL: "https://iramsfyp-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "iramsfyp",
+                storageBucket: "iramsfyp.firebasestorage.app",
+                messagingSenderId: "562587940412",
+                appId: "1:562587940412:web:2a2471b2fd3dca4da5b539",
+                measurementId: "G-KX04J3B1VQ"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            window.db = getFirestore(app);
+            const auth = getAuth(app);
+
+            onAuthStateChanged(auth, (user) => {
+                if (user && !user.isAnonymous) {
+                    document.dispatchEvent(new Event("firebase-auth-ready"));
+                }
+            });
+
+            if (window.db) {
+                console.log("Firestore initialized successfully.");
+            } else {
+                console.log("Firestore is not initialized. Please check your Firebase setup.");
+            }
+        </script>
+
+        <!-- Sidebar: show Admin Management link only for Managers -->
+        <script type="module">
+            import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+            document.addEventListener("firebase-auth-ready", async () => {
+                try {
+                    const email = window.__adminEmail;
+                    if (!email) return;
+                    const q = query(collection(db, "Admins"), where("AdminEmail", "==", email));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        const data = snap.docs[0].data();
+
+                        // Show Admin Management link for Managers
+                        if (data.Role === "Manager") {
+                            const link = document.getElementById("adminMgmtLink");
+                            if (link) link.classList.remove("hidden");
+                        }
+
+                        // Set profile picture
+                        if (data.AdminPicture) {
+                            const img = document.getElementById("imgAdminProfile");
+                            const fallback = document.getElementById("iconAdminFallback");
+                            if (img) {
+                                img.src = data.AdminPicture;
+                                img.classList.remove("hidden");
+                            }
+                            if (fallback) fallback.classList.add("hidden");
+                        }
+                    }
+                } catch (e) {
+                    console.error("Admin role check error:", e);
+                }
+            });
+        </script>
+
+        <!-- Sidebar badge counts (runs on every page) -->
+        <script type="module">
+            import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+            document.addEventListener("firebase-auth-ready", async () => {
+                // Compliance badge — pending contractor verifications
+                try {
+                    const cq = query(
+                        collection(db, "Contractor"),
+                        where("VerificationStatus", "==", "under_review")
+                    );
+                    const cSnap = await getDocs(cq);
+                    const cBadge = document.getElementById("complianceBadge");
+                    if (cBadge) {
+                        cBadge.textContent = cSnap.size;
+                        cBadge.classList.toggle("hidden", cSnap.size === 0);
+                    }
+                } catch (e) {
+                    console.error("Compliance badge error:", e);
+                }
+
+                // Car Approvals badge — pending CarDetails (Make=="Undefined", not rejected)
+                try {
+                    const carQ = query(
+                        collection(db, "CarDetails"),
+                        where("Make", "==", "Undefined")
+                    );
+                    const carSnap = await getDocs(carQ);
+                    let carPending = 0;
+                    carSnap.forEach(d => {
+                        const data = d.data() || {};
+                        if ((data.Status || "").toLowerCase() !== "rejected") carPending++;
+                    });
+                    const carBadge = document.getElementById("carApprovalBadge");
+                    if (carBadge) {
+                        carBadge.textContent = carPending;
+                        carBadge.classList.toggle("hidden", carPending === 0);
+                    }
+                } catch (e) {
+                    console.error("Car approvals badge error:", e);
+                }
+
+                // Finance badge — pending withdrawals
+                try {
+                    const fq = query(
+                        collection(db, "Withdrawals"),
+                        where("Status", "==", "pending")
+                    );
+                    const fSnap = await getDocs(fq);
+                    const fBadge = document.getElementById("financeBadge");
+                    if (fBadge) {
+                        fBadge.textContent = fSnap.size;
+                        fBadge.classList.toggle("hidden", fSnap.size === 0);
+                    }
+                } catch (e) {
+                    console.error("Finance badge error:", e);
+                }
+            });
+        </script>
+    </form>
+</body>
+</html>

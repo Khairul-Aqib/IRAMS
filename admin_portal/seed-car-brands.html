@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>CarBrands Bulk Seeder</title>
+    <style>
+        body {
+            font-family: -apple-system, Segoe UI, system-ui, sans-serif;
+            background: #0d0d0d;
+            color: #eaeaea;
+            max-width: 900px;
+            margin: 32px auto;
+            padding: 0 20px;
+        }
+        h1 { color: #facc15; margin-bottom: 8px; }
+        p.lead { color: #9ca3af; margin-top: 0; }
+        textarea {
+            width: 100%;
+            height: 320px;
+            background: #1a1a1a;
+            color: #eaeaea;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .row { display: flex; gap: 12px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+        button {
+            background: #facc15;
+            color: #111;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button.secondary { background: #2a2a2a; color: #eaeaea; }
+        #log {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            height: 280px;
+            overflow-y: auto;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .ok    { color: #22c55e; }
+        .warn  { color: #facc15; }
+        .err   { color: #ef4444; }
+        .muted { color: #6b7280; }
+        details { margin: 8px 0 16px; }
+        summary { cursor: pointer; color: #9ca3af; }
+        code { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>CarBrands Bulk Seeder</h1>
+    <p class="lead">
+        Local one-shot tool. Paste a JSON object, click upload. Writes
+        <code>CarBrands/{brand}</code> with a <code>CarTypes</code> array AND a
+        <code>Models</code> subcollection (one doc per model).
+    </p>
+
+    <details>
+        <summary>Expected JSON shape (click to expand)</summary>
+        <pre>{
+  "Toyota": ["Vios", "Hilux", "Camry"],
+  "Honda":  ["Civic", "City", "CR-V"],
+  "BMW":    ["M3", "X5", "320i"]
+}</pre>
+        <p class="muted" style="font-size: 12px;">
+            Brand keys become document IDs. Each model becomes both an array entry
+            on the brand doc and a separate document under
+            <code>CarBrands/{brand}/Models/{model}</code>.
+        </p>
+    </details>
+
+    <textarea id="json" placeholder='{"Toyota":["Vios","Hilux"],"Honda":["Civic","City"]}'></textarea>
+
+    <div class="row">
+        <button id="btnUpload">Upload to Firestore</button>
+        <button id="btnClear" class="secondary" type="button">Clear log</button>
+        <span id="status" class="muted"></span>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+        // Plain script (runs even if the module below errors) — wires up the log
+        // helper and an early-warning click handler so the button always responds.
+        window.__seederLog = function (msg, cls) {
+            const logEl = document.getElementById("log");
+            const line = document.createElement("div");
+            if (cls) line.className = cls;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+
+        document.getElementById("btnClear").addEventListener("click", () => {
+            document.getElementById("log").innerHTML = "";
+        });
+
+        // If the module never finishes loading, this placeholder shows feedback.
+        document.getElementById("btnUpload").addEventListener("click", function placeholder() {
+            window.__seederLog(
+                "Module not loaded yet (or Firebase init failed). Check DevTools Console (F12) for the real error.",
+                "err"
+            );
+        });
+
+        window.addEventListener("error", e => {
+            window.__seederLog("Script error: " + (e.message || e.error || e), "err");
+        });
+        window.addEventListener("unhandledrejection", e => {
+            window.__seederLog("Async error: " + (e.reason && e.reason.message ? e.reason.message : e.reason), "err");
+        });
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getFirestore, doc, setDoc, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const log = window.__seederLog;
+
+        // ───────────────────────────────────────────────────────────────
+        // TODO: paste your firebaseConfig below.
+        // (Copy from Site1.Master if you want to point at the same project.)
+        // ───────────────────────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMlwMv8JHIaiEnAhXMCVB8HItv8ovsVPA",
+            authDomain: "iramsfyp.firebaseapp.com",
+            databaseURL: "https://iramsfyp-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "iramsfyp",
+            storageBucket: "iramsfyp.firebasestorage.app",
+            messagingSenderId: "562587940412",
+            appId: "1:562587940412:web:2a2471b2fd3dca4da5b539",
+            measurementId: "G-KX04J3B1VQ"
+        };
+
+        // Loud warning if the placeholders weren't replaced.
+        if (firebaseConfig.apiKey === "PASTE_API_KEY" || !firebaseConfig.projectId || firebaseConfig.projectId === "PASTE_PROJECT_ID") {
+            log("firebaseConfig still has placeholders — paste your real config from Site1.Master.", "err");
+            throw new Error("Missing firebaseConfig");
+        }
+
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            log("Firebase initialized. Project: " + firebaseConfig.projectId, "muted");
+        } catch (err) {
+            log("Firebase init failed: " + err.message, "err");
+            throw err;
+        }
+
+        // Anonymous auth so the same Firestore rules that the admin app uses
+        // (request.auth != null) will let writes through.
+        try {
+            await signInAnonymously(auth);
+            log("Signed in anonymously. Ready to upload.", "ok");
+        } catch (err) {
+            log("Auth failed: " + err.message + " (Check Anonymous provider is enabled in Firebase Console.)", "err");
+            throw err;
+        }
+
+        const logEl = document.getElementById("log");
+        const statusEl = document.getElementById("status");
+        const btnUpload = document.getElementById("btnUpload");
+        const jsonEl = document.getElementById("json");
+
+        // Replace the placeholder click handler with the real one.
+        const newBtn = btnUpload.cloneNode(true);
+        btnUpload.parentNode.replaceChild(newBtn, btnUpload);
+
+        newBtn.addEventListener("click", async () => {
+            logEl.innerHTML = "";
+            statusEl.textContent = "";
+
+            // Parse JSON
+            let parsed;
+            try {
+                parsed = JSON.parse(jsonEl.value);
+            } catch (err) {
+                log("Invalid JSON: " + err.message, "err");
+                return;
+            }
+
+            // Normalise both shapes — { Brand: [models] } OR [{ name, models: [] }]
+            const entries = [];
+            if (Array.isArray(parsed)) {
+                for (const item of parsed) {
+                    if (item && item.name && Array.isArray(item.models)) {
+                        entries.push([item.name, item.models]);
+                    }
+                }
+            } else if (parsed && typeof parsed === "object") {
+                for (const [k, v] of Object.entries(parsed)) {
+                    if (Array.isArray(v)) entries.push([k, v]);
+                }
+            }
+
+            if (entries.length === 0) {
+                log("No brand entries found. Check the JSON shape.", "err");
+                return;
+            }
+
+            newBtn.disabled = true;
+            statusEl.textContent = "Uploading…";
+
+            let brandsDone = 0;
+            let modelsDone = 0;
+            let failures = 0;
+
+            for (const [brandRaw, modelsRaw] of entries) {
+                const brand = String(brandRaw).trim();
+                const models = (modelsRaw || []).map(m => String(m).trim()).filter(Boolean);
+
+                if (!brand) { log("Skipping empty brand name.", "warn"); continue; }
+
+                try {
+                    await setDoc(doc(db, "CarBrands", brand), {
+                        CarTypes: models,
+                        UpdatedAt: serverTimestamp()
+                    }, { merge: true });
+                    log(`Brand OK → CarBrands/${brand} (${models.length} models)`, "ok");
+                    brandsDone++;
+                } catch (err) {
+                    log(`Brand FAIL → ${brand}: ${err.message}`, "err");
+                    failures++;
+                    continue; // skip models for this brand
+                }
+
+                for (const model of models) {
+                    try {
+                        await setDoc(
+                            doc(db, "CarBrands", brand, "Models", model),
+                            { Name: model, CreatedAt: serverTimestamp() },
+                            { merge: true }
+                        );
+                        modelsDone++;
+                    } catch (err) {
+                        log(`  Model FAIL → ${brand}/${model}: ${err.message}`, "err");
+                        failures++;
+                    }
+                }
+            }
+
+            statusEl.textContent = "";
+            log(`Done. Brands: ${brandsDone}, Models: ${modelsDone}, Failures: ${failures}.`,
+                failures ? "warn" : "ok");
+            log("Success ✅", "ok");
+            newBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
